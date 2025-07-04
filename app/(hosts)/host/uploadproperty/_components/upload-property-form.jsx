@@ -177,33 +177,30 @@ setUploadedImages([]);
 
 
   const onSubmit = async (data) => {
+  console.log("Form submitted with data:", data);
 
-    //check image is present
-    if (uploadedImages.length === 0) {
-      setImageError("Please upload atleast one image")
-      return
-    }
-    // Prepare data for server action
-    const propertyData = {
-      ...data,
-      price: parseFloat(data.price),
-      guests: parseInt(data.guests),
-      bedrooms: parseInt(data.bedrooms),
-      bathrooms: parseInt(data.bathrooms),
-      bhk: parseInt(data.bhk),
+  if (uploadedImages.length === 0) {
+    setImageError("Please upload at least one image");
+    return;
+  }
 
-    };
-    
+  const propertyData = {
+    ...data,
+    price: parseFloat(data.price),
+    guests: parseInt(data.guests),
+    bedrooms: parseInt(data.bedrooms),
+    bathrooms: parseInt(data.bathrooms),
+    bhk: parseInt(data.bhk),
+  };
+
   try {
-    await addPropertyFn({
-      ...propertyData,
-      images: uploadedImages,
-    });
+    await addPropertyFn({ propertyData, images: uploadedImages });
   } catch (err) {
     toast.error("Failed to add property. Please try again.");
     console.error("Property add error:", err);
   }
-  };
+};
+
   return (
     <div>
       <Card>

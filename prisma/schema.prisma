@@ -9,17 +9,84 @@ datasource db {
 }
 
 model User {
-  id            String             @id @default(uuid())
-  clerkUserId   String             @unique // clerk user id
-  email         String             @unique
-  name          String?
-  imageUrl      String?
-  phone         String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  role          UserRole           @default(USER)
-  savedCars     UserSavedStay[]
-  staybook    UserStayBookings[]
+  id               String             @id @default(uuid())
+  clerkUserId      String             @unique
+  email            String             @unique
+  name             String?
+  imageUrl         String?
+  phone            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  role             UserRole           @default(USER)
+  UserSavedStay    UserSavedStay[]
+  UserStayBookings UserStayBookings[]
+}
+
+model Property {
+  id               String             @id(map: "Stay_pkey") @default(uuid())
+  title            String
+  location         String
+  price            Decimal            @db.Decimal(10, 2)
+  images           String[]
+  guests           Int
+  bedrooms         Int
+  bathrooms        Int
+  bhk              Int
+  description      String
+  isWishlisted     Boolean
+  status           CarStatus          @default(AVAILABLE)
+  createdAt        DateTime           @default(now())
+  updatesAt        DateTime           @updatedAt
+  UserSavedStay    UserSavedStay[]
+  UserStayBookings UserStayBookings[]
+
+  @@index([guests], map: "Stay_guests_idx")
+  @@index([isWishlisted], map: "Stay_isWishlisted_idx")
+  @@index([location], map: "Stay_location_idx")
+  @@index([price], map: "Stay_price_idx")
+  @@index([status], map: "Stay_status_idx")
+}
+
+model Host {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @default("+91 (987) 481-8367")
+  email     String   @default("contact@stayo.com")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserSavedStay {
+  id       String   @id
+  userId   String
+  stayId   String
+  savedAt  DateTime @default(now())
+  Property Property @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stayId])
+  @@index([stayId])
+  @@index([userId])
+}
+
+model UserStayBookings {
+  id          String        @id
+  stayId      String
+  userId      String
+  bookingDate DateTime      @db.Date
+  startTime   String
+  endTime     String
+  status      BookingStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  Property    Property      @relation(fields: [stayId], references: [id])
+  User        User          @relation(fields: [userId], references: [id])
+
+  @@index([bookingDate])
+  @@index([status])
+  @@index([stayId])
+  @@index([userId])
 }
 
 enum UserRole {
@@ -28,93 +95,16 @@ enum UserRole {
   ADMIN
 }
 
-model Stay {
-  id            String    @id @default(uuid())
-  title         String
-  location      String
-  price         Decimal     @db.Decimal(10, 2)
-  images        String[]
-  guests        Int
-  bedrooms      Int
-  bathrooms     Int
-  bhk           Int
-  description   String
-  isWishlisted  Boolean
-  status        CarStatus          @default(AVAILABLE)
-  savedBy       UserSavedStay[]
-  userstaybookings  UserStayBookings[]
-  createdAt     DateTime            @default(now())
-  updatesAt     DateTime            @updatedAt
-
-
-
-
-  @@index([location])       // use full for faster accesing elements by database
-  @@index([guests])
-  @@index([price])
-  @@index([isWishlisted])
-  @@index([status])
-    
-}
-
-
-
-enum CarStatus {
-  AVAILABLE
-  UNAVAILABLE
-  BOOKED
-}
-
-// Single Hosts configuration
-model Host {
-  id           String        @id @default(uuid())
-  name         String        
-  phone        String        @default("+91 (987) 481-8367")
-  email        String        @default("contact@stayo.com")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-}
-
-
-
-
-model UserSavedStay {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stayId     String
-  stay       Stay      @relation(fields: [stayId], references: [id], onDelete: Cascade)
-  savedAt   DateTime @default(now())
-
-  @@unique([userId, stayId])
-  @@index([userId])
-  @@index([stayId])
-}
-
-model UserStayBookings {
-  id            String        @id @default(uuid())
-  stayId         String
-  stay           Stay           @relation(fields: [stayId], references: [id])
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  bookingDate   DateTime      @db.Date
-  startTime     String        // Format: "HH:MM" (24-hour)
-  endTime       String        // Format: "HH:MM" (24-hour)
-  status        BookingStatus @default(PENDING)
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@index([stayId])
-  @@index([userId])
-  @@index([bookingDate])
-  @@index([status])
-}
-
 enum BookingStatus {
   PENDING
   CONFIRMED
   COMPLETED
   CANCELLED
   NO_SHOW
+}
+
+enum CarStatus {
+  AVAILABLE
+  UNAVAILABLE
+  BOOKED
 }
